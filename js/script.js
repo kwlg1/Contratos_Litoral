@@ -1,57 +1,138 @@
-document.getElementById('cnh_scanner').addEventListener('change', function (e) {
+
+// Substitua pela sua chave real do ocr.space
+// Substitua pela chave que você recebeu por e-mail (OCR.space)
+const MINHA_CHAVE_GRATUITA = "K82367523888957"; 
+
+document.getElementById('cnh_scanner').addEventListener('change', async function(e) {
     const file = e.target.files[0];
     const status = document.getElementById('scanner_status');
     if (!file) return;
 
-    status.innerText = "LENDO DADOS DA CNH... AGUARDE.";
-    status.classList.add("text-blue-600");
+    status.innerText = "⏳ PROCESSANDO CNH... AGUARDE";
+    status.className = "text-blue-600 font-bold text-[10px] animate-pulse";
 
-    Tesseract.recognize(
-        file,
-        'por', // Idioma Português
-        { logger: m => console.log(m) }
-    ).then(({ data: { text } }) => {
-        // 1. Limpeza: Transforma tudo em Maiúsculas e remove espaços extras
-        const linhas = text.split('\n').map(l => l.trim().toUpperCase()).filter(l => l.length > 3);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("apikey", MINHA_CHAVE_GRATUITA);
+    formData.append("language", "por");
+    formData.append("ocrEngine", "2"); // Motor otimizado para documentos
 
-        // 2. Lista de palavras que DEVEMOS IGNORAR (termos fixos da CNH)
-        const ignorar = ["NOME", "DOC", "IDENTIDADE", "BRASIL", "REPUBLICA", "CARTEIRA", "NACIONAL", "HABILITACAO", "FILIACAO", "ACC", "ORGAO", "EMISSOR", "LOCAL", "DATA"];
-
-        // --- BUSCA PELO CPF ---
-        const cpfMatch = text.match(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/);
-        if (cpfMatch) document.getElementById('cpf').value = cpfMatch[0];
-
-        // --- BUSCA PELA CNH (11 DÍGITOS) ---
-        const cnhMatch = text.match(/\d{11}/);
-        if (cnhMatch) document.getElementById('cnh').value = cnhMatch[0];
-
-        // --- BUSCA PELO NOME (A PARTE DIFÍCIL) ---
-        // Vamos procurar a primeira linha que NÃO tenha números e NÃO esteja na lista de ignorar
-        const nomeReal = linhas.find(linha => {
-            const temNumero = /\d/.test(linha);
-            const ehTermoFixo = ignorar.some(termo => linha.includes(termo));
-            return !temNumero && !ehTermoFixo && linha.length > 8;
+    try {
+        const response = await fetch("https://api.ocr.space/parse/image", {
+            method: "POST",
+            body: formData
         });
 
-        if (nomeReal) {
-            // Se o nome vier com "NOME:" no início, a gente remove
-            document.getElementById('cliente').value = nomeReal.replace("NOME:", "").trim();
-        }
+        const data = await response.json();
 
-        // --- BUSCA PELA VALIDADE ---
-        const dataMatch = text.match(/\d{2}\/\d{2}\/\d{4}/g);
-        // Geralmente a maior data na CNH é a de validade
-        if (dataMatch && dataMatch.length > 0) {
-            // Converte DD/MM/AAAA para o formato do input date (AAAA-MM-DD)
-            const partes = dataMatch[dataMatch.length - 1].split('/');
-            document.getElementById('cnh_venc').value = `${partes[2]}-${partes[1]}-${partes[0]}`;
+        if (data.OCRExitCode === 1) {
+            const textoLido = data.ParsedResults[0].ParsedText;
+            console.log("Texto extraído:", textoLido);
+            
+            processarDadosLitoral(textoLido);
+            
+            status.innerText = "✅ CONCLUÍDO! REVISE OS CAMPOS.";
+            status.className = "text-green-600 font-bold text-[10px]";
+        } else {
+            status.innerText = "❌ ERRO AO LER. TIRE A FOTO MAIS PERTO.";
+            status.className = "text-red-600 font-bold text-[10px]";
         }
-
-        status.innerText = "LEITURA CONCLUÍDA! REVISE OS CAMPOS.";
-        status.classList.replace("text-blue-600", "text-green-600");
-    })
+    } catch (error) {
+        status.innerText = "❌ ERRO DE CONEXÃO.";
+    }
 });
 
+function processarDadosLitoral(texto) {
+    const raw = texto.toUpperCase();
+    // Dividimos o texto em linhas e limpamos espaços extras
+    const linhas = raw.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+
+    console.log("Análise de Linhas:", linhas);
+
+    // --- 1. CPF (11 dígitos com ou sem máscara) ---
+    const cpfMatch = raw.match(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/);
+    if (cpfMatch) {
+        const cpfLimpo = cpfMatch[0].replace(/\D/g, '');
+        document.getElementById('cpf').value = cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+    }
+
+    // --- 2. NÚMERO DA CNH ---
+    const cnhMatch = raw.match(/\b\d{11}\b/);
+    if (cnhMatch) document.getElementById('cnh').value = cnhMatch[0];
+
+    // --- 3. DATAS (Validade e Emissão) ---
+    const todasDatas = raw.match(/\d{2}\/\d{2}\/\d{4}/g);
+    if (todasDatas && todasDatas.length >= 2) {
+        // Geralmente a CNH lida tem: Nascimento, Emissão e Validade.
+        // A Validade é quase sempre a maior/última data.
+        // A Emissão costuma ser a data entre o nascimento e a validade.
+        
+        // Ordenamos as datas para não ter erro
+        const datasOrdenadas = todasDatas.sort((a, b) => {
+            return new Date(a.split('/').reverse().join('-')) - new Date(b.split('/').reverse().join('-'));
+        });
+
+        // Validade (A mais futura)
+        const valStr = datasOrdenadas[datasOrdenadas.length - 1];
+        const [vd, vm, va] = valStr.split('/');
+        document.getElementById('cnh_venc').value = `${va}-${vm}-${vd}`;
+
+        // Emissão (A data anterior à validade, mas posterior ao nascimento)
+        const emiStr = datasOrdenadas[datasOrdenadas.length - 2];
+        const [ed, em, ea] = emiStr.split('/');
+        // Verifique se o ID do campo de emissão no seu HTML é 'cnh_emissao'
+        if(document.getElementById('cnh_emissao')) {
+            document.getElementById('cnh_emissao').value = `${ea}-${em}-${ed}`;
+        }
+    }
+
+// --- 4. BUSCA PELA CATEGORIA (Lógica de Prioridade AB) ---
+const categoriasValidas = ["ACC", "AB", "AC", "AD", "AE", "A", "B", "C", "D", "E"];
+const ufs = ["SP", "RJ", "MG", "ES", "PR", "SC", "RS", "MS", "MT", "GO", "DF", "AM", "BA", "CE", "PA", "PE", "RN", "PB", "AL", "SE", "RO", "AC", "RR", "AP", "TO", "PI", "MA"];
+
+let catFinal = "";
+
+// 1. Procuramos todas as ocorrências de 1 ou 2 letras A-E
+const todasOcorrencias = raw.match(/\b[A-E]{1,2}\b/g) || [];
+
+// 2. Filtramos apenas o que é categoria real e não é Estado (UF)
+const candidatos = todasOcorrencias.filter(c => 
+    categoriasValidas.includes(c) && !ufs.includes(c)
+);
+
+if (candidatos.length > 0) {
+    // REGRA DE OURO: Se houver qualquer "AB", "AC" etc. na lista, 
+    // nós damos prioridade para a maior string (ex: AB ganha de A)
+    const maiorCat = candidatos.sort((a, b) => b.length - a.length)[0];
+    
+    // Na CNH, a categoria oficial geralmente aparece por último no texto lido
+    const ultimaCat = candidatos[candidatos.length - 1];
+
+    // Se a última encontrada for apenas 1 letra (A), mas existir um AB perdido antes, 
+    // ficamos com o AB porque é mais específico.
+    catFinal = maiorCat.length > ultimaCat.length ? maiorCat : ultimaCat;
+}
+
+// 3. Validação Extra: Se ainda estiver vazio, busca perto da palavra "CAT"
+if (!catFinal) {
+    const regexCat = /(?:CAT|CATEGORIA)\s*([A-E]{1,2})/i;
+    const matchManual = raw.match(regexCat);
+    if (matchManual) catFinal = matchManual[1];
+}
+
+if (catFinal && document.getElementById('cnh_cat')) {
+    document.getElementById('cnh_cat').value = catFinal;
+}
+
+    // --- 5. NOME DO CLIENTE ---
+    const termosDoc = ["BRASIL", "REPUBLICA", "NACIONAL", "MINISTERIO", "TRANSITO", "HABILITACAO", "IDENTIDADE", "NOME", "DOC", "VALIDADE", "DATA", "EMISSÃO"];
+    const linhaNome = linhas.find(l => 
+        l.length > 12 && 
+        !/\d/.test(l) && 
+        !termosDoc.some(t => l.includes(t))
+    );
+    if (linhaNome) document.getElementById('cliente').value = linhaNome;
+}
 
 // A lógica de clique permanece a mesma, mas agora o mapa é mais completo
 const carSvg = document.getElementById('car-svg');
