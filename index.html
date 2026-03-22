@@ -59,6 +59,16 @@
     <main class="max-w-3xl mx-auto p-4 pb-20">
 
         <section id="step1" class="step active space-y-4">
+            <div class="bg-red-50 p-4 rounded-lg border-2 border-dashed border-red-200 mb-4 text-center">
+                <p class="text-xs font-bold text-red-600 mb-2 uppercase">Agilizar Preenchimento</p>
+                <input type="file" id="cnh_scanner" accept="image/*" capture="camera" class="hidden">
+                <label for="cnh_scanner"
+                    class="bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm cursor-pointer shadow-md inline-block">
+                    📷 ESCANEAR CNH
+                </label>
+                <p id="scanner_status" class="text-[10px] mt-2 text-gray-500 font-bold"></p>
+            </div>
+
             <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-red-600">
                 <h2 class="bg-gray-800 text-white px-3 py-1 inline-block mb-4 rounded italic font-bold">1. DADOS DO
                     LOCATÁRIO</h2>
@@ -349,6 +359,7 @@
             </div>
         </section>
     </main>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>

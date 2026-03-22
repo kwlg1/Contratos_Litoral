@@ -1,3 +1,44 @@
+document.getElementById('cnh_scanner').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const status = document.getElementById('scanner_status');
+    if (!file) return;
+
+    status.innerText = "LENDO DADOS DA CNH... AGUARDE.";
+    status.classList.add("text-blue-600");
+
+    Tesseract.recognize(
+        file,
+        'por', // Idioma Português
+        { logger: m => console.log(m) }
+    ).then(({ data: { text } }) => {
+        console.log("Texto extraído:", text);
+        
+        // Limpeza básica e tentativa de preencher campos via Regex
+        const linhas = text.split('\n');
+        
+        // Tenta achar o CPF (Padrão 000.000.000-00 ou só números)
+        const cpfMatch = text.match(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/);
+        if (cpfMatch) document.getElementById('cpf').value = cpfMatch[0];
+
+        // Tenta achar o Número da CNH (Geralmente 11 dígitos isolados)
+        const cnhMatch = text.match(/\d{11}/);
+        if (cnhMatch) document.getElementById('cnh').value = cnhMatch[0];
+
+        // O nome geralmente é uma das primeiras linhas grandes em caixa alta
+        // Aqui pegamos a linha que tiver mais de 10 caracteres e não for só número
+        const nomeProvavel = linhas.find(l => l.length > 10 && !/\d/.test(l));
+        if (nomeProvavel) document.getElementById('cliente').value = nomeProvavel.trim().toUpperCase();
+
+        status.innerText = "LEITURA CONCLUÍDA! CONFIRA OS DADOS.";
+        status.classList.replace("text-blue-600", "text-green-600");
+    }).catch(err => {
+        console.error(err);
+        status.innerText = "ERRO NA LEITURA. TENTE TIRAR UMA FOTO MAIS NÍTIDA.";
+        status.classList.replace("text-blue-600", "text-red-600");
+    });
+});
+
+
 // A lógica de clique permanece a mesma, mas agora o mapa é mais completo
 const carSvg = document.getElementById('car-svg');
 const uploadInput = document.getElementById('upload-input');
