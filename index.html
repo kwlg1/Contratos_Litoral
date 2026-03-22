@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Litoral Rent a Car - Contrato Digital</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        .canvas-container {
+            border: 2px solid #333;
+            background: #fff;
+            width: 100%;
+            height: 250px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        #signature-pad {
+            width: 100% !important;
+            height: 200px !important;
+            display: block;
+            background-color: #ffffff;
+            z-index: 10;
+            /* Garante que está na frente de tudo */
+            cursor: crosshair;
+            /* Indica que é uma área de desenho */
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+    <header class="bg-white border-b-4 border-red-600 p-4 shadow-md text-center">
+        <div class="max-w-2xl mx-auto flex justify-between items-center">
+            <div class="text-left">
+                <h1 class="text-3xl font-black text-red-600">LITORAL <span
+                        class="text-gray-800 text-xl block font-bold">Rent a Car</span></h1>
+            </div>
+            <div class="text-right text-xs text-gray-600">
+                <p>📍 Barra de Santo Antônio / AL</p>
+                <p>📞 (82) 99910-6308 - Edson</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto p-4 pb-20">
+
+        <section id="step1" class="step active space-y-4">
+            <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-red-600">
+                <h2 class="bg-gray-800 text-white px-3 py-1 inline-block mb-4 rounded italic font-bold">1. DADOS DO
+                    LOCATÁRIO</h2>
+
+                <div class="grid grid-cols-1 gap-3">
+                    <input type="text" id="cliente" placeholder="Cliente" class="w-full p-2 border rounded">
+                    <input type="text" id="end_res" placeholder="End. Resed." class="w-full p-2 border rounded">
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="tel_res" placeholder="Tel." class="w-full p-2 border rounded">
+                        <input type="text" id="bairro_res" placeholder="Bairro" class="w-full p-2 border rounded">
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <input type="text" id="cep_res" placeholder="Cep" class="w-full p-2 border rounded">
+                        <input type="text" id="cid_res" placeholder="Cid." class="w-full p-2 border rounded">
+                        <input type="text" id="est_res" placeholder="Est." class="w-full p-2 border rounded">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="identidade" placeholder="C. Identidade"
+                            class="w-full p-2 border rounded">
+                        <input type="text" id="cpf" placeholder="CPF" class="w-full p-2 border rounded">
+                    </div>
+
+                    <input type="text" id="cnh" placeholder="Cart. Habilitação nº" class="w-full p-2 border rounded">
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="flex flex-col">
+                            <label class="text-[10px] font-bold text-gray-400">DATA DE EMISSÃO</label>
+                            <input type="date" id="cnh_emissao" class="w-full p-2 border rounded">
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-[10px] font-bold text-gray-400">VENCIMENTO</label>
+                            <input type="date" id="cnh_venc" class="w-full p-2 border rounded">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-4 gap-2">
+                        <input type="text" id="cat" placeholder="Cat." class="w-full p-2 border rounded col-span-1">
+                        <input type="email" id="email" placeholder="E-mail"
+                            class="w-full p-2 border rounded col-span-3">
+                    </div>
+                </div>
+
+                <button onclick="nextStep(2)"
+                    class="w-full bg-red-600 text-white py-3 rounded-xl font-bold mt-4 shadow-lg">PRÓXIMO:
+                    VEÍCULO</button>
+            </div>
+        </section>
+
+        <section id="step2" class="step space-y-4" style="display:none;">
+            <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-red-600">
+                <h2 class="bg-gray-800 text-white px-3 py-1 inline-block mb-4 rounded italic font-bold">2. VEÍCULO E
+                    HOSPEDAGEM</h2>
+
+                <div class="grid grid-cols-1 gap-3">
+                    <input type="text" id="modelo" placeholder="Modelo Carro" class="w-full p-2 border rounded">
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <input type="text" id="cor" placeholder="Cor" class="w-full p-2 border rounded">
+                        <input type="text" id="placa" placeholder="Placa" class="w-full p-2 border rounded">
+                        <input type="number" id="n_diaria" placeholder="Nº de diária" class="w-full p-2 border rounded">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="valor_diaria" placeholder="Valor diárias / Locação R$"
+                            class="w-full p-2 border rounded">
+                        <input type="text" id="total_pagar" placeholder="Total a pagar R$"
+                            class="w-full p-2 border rounded">
+                    </div>
+
+                    <div class="bg-gray-50 p-3 rounded border">
+                        <p class="text-[10px] font-bold mb-2">SAÍDA / CHEGADA</p>
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <input type="datetime-local" id="saida_dt" title="Saída"
+                                class="w-full p-2 border rounded text-xs">
+                            <input type="text" id="saida_km" placeholder="Km Saída" class="w-full p-2 border rounded">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="datetime-local" id="chegada_dt" title="Chegada"
+                                class="w-full p-2 border rounded text-xs">
+                            <input type="text" id="chegada_km" placeholder="Km Chegada"
+                                class="w-full p-2 border rounded">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="hotel" placeholder="Hotel" class="w-full p-2 border rounded">
+                        <input type="text" id="hotel_tel" placeholder="Tel. Hotel" class="w-full p-2 border rounded">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="hotel_apto" placeholder="Apto." class="w-full p-2 border rounded">
+                        <input type="number" id="hotel_diarias" placeholder="Nº de diárias (Hotel)"
+                            class="w-full p-2 border rounded">
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2 mt-4">
+                    <button onclick="nextStep(3)"
+                        class="w-full bg-red-600 text-white py-3 rounded-xl font-bold shadow-lg">PRÓXIMO:
+                        VISTORIA</button>
+                    <button onclick="nextStep(1)"
+                        class="w-full text-gray-400 text-xs font-bold uppercase">Voltar</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="step3" class="step space-y-4">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="bg-gray-800 text-white px-3 py-1 inline-block mb-2 rounded italic font-bold text-sm">3.
+                    VISTORIA DE AVARIAS</h2>
+
+                <div
+                    class="bg-yellow-50 p-3 rounded-lg border border-yellow-200 grid grid-cols-2 gap-2 text-[10px] font-bold">
+                    <label class="flex items-center gap-2"><input type="checkbox" id="macaco"> MACACO</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" id="estepe"> ESTEPE</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" id="ferram"> FERRAM.</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" id="triangulo"> TRIÂNGULO</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" id="documento"> DOCUMENTO</label>
+                </div>
+                <br>
+                <p class="text-[10px] text-gray-500 mb-4 uppercase font-bold">Toque no componente com dano para anexar a
+                    foto:</p>
+
+                <div class="relative bg-white p-2 rounded-xl border-2 border-gray-100 flex justify-center items-center overflow-hidden shadow-inner"
+                    id="map-container">
+                    <svg id="car-svg" viewBox="0 0 500 350" class="w-full h-auto cursor-pointer">
+                        <style>
+                            .car-part {
+                                fill: #f1f5f9;
+                                stroke: #475569;
+                                stroke-width: 1.5;
+                                transition: fill 0.2s;
+                            }
+
+                            .car-part:active {
+                                fill: #cbd5e1;
+                            }
+
+                            text {
+                                font-family: sans-serif;
+                                font-size: 10px;
+                                fill: #94a3b8;
+                                font-weight: bold;
+                                pointer-events: none;
+                            }
+                        </style>
+
+                        <rect x="100" y="20" width="300" height="60" rx="10" class="car-part" />
+                        <text x="210" y="55">LATERAL ESQUERDA</text>
+
+                        <rect x="20" y="110" width="70" height="120" rx="5" class="car-part" />
+                        <text x="35" y="175" transform="rotate(-90 35,175)">FRENTE</text>
+
+                        <rect x="100" y="100" width="300" height="140" rx="15" class="car-part" />
+                        <text x="235" y="175">TETO</text>
+
+                        <rect x="410" y="110" width="70" height="120" rx="5" class="car-part" />
+                        <text x="445" y="175" transform="rotate(90 445,175)">TRASEIRA</text>
+
+                        <rect x="100" y="260" width="300" height="60" rx="10" class="car-part" />
+                        <text x="215" y="295">LATERAL DIREITA</text>
+                    </svg>
+
+                    <div id="damage-markers" class="absolute inset-0 pointer-events-none"></div>
+                </div>
+
+                <input type="file" id="upload-input" accept="image/*" class="hidden">
+
+                <div class="mt-4">
+                    <div id="damage-list" class="grid grid-cols-3 gap-2">
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-6">
+                    <button onclick="nextStep(2)"
+                        class="w-1/3 bg-gray-100 py-3 rounded-lg font-bold text-xs uppercase text-gray-500">Voltar</button>
+                    <button onclick="nextStep(4)"
+                        class="w-2/3 bg-red-600 text-white py-3 rounded-lg font-bold shadow-lg text-sm uppercase italic">Ir
+                        para Assinatura ➔</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="step4" class="step space-y-4" style="display: none;">
+            <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-green-500">
+                <h2 class="bg-gray-800 text-white px-3 py-1 inline-block mb-4 rounded italic">4. TERMOS E ASSINATURA
+                    FINAL</h2>
+
+                <div
+                    class="bg-gray-50 border p-4 rounded mb-4 h-80 overflow-y-scroll text-[11px] text-gray-700 leading-relaxed shadow-inner">
+                    <h3 class="font-bold text-center mb-2 uppercase text-red-600 border-b pb-1">Condições Gerais de
+                        Locação (Editáveis)</h3>
+
+                    <div class="space-y-3">
+                        <p><strong>01.</strong> O LOCATÁRIO declara receber o veículo em perfeitas condições de uso,
+                            conservação e limpeza.</p>
+
+                        <p><strong>02. TAXA DE LAVAGEM:</strong> Caso o veículo retorne sujo, será cobrada taxa de
+                            R$ <input type="text" id="term_lavagem_simples" value="50,00"
+                                class="w-12 border-b border-gray-400 bg-transparent text-center font-bold focus:outline-none">
+                            (simples) ou
+                            R$ <input type="text" id="term_lavagem_tecnica" value="150,00"
+                                class="w-12 border-b border-gray-400 bg-transparent text-center font-bold focus:outline-none">
+                            (bancos/carpete).</p>
+
+                        <p><strong>03. PERDA DE CHAVE:</strong> Em caso de perda da chave, será cobrado o valor da chave
+                            codificada vigente na data da ocorrência.</p>
+
+                        <p><strong>04. QUILOMETRAGEM:</strong> KM excedente será cobrado o valor de
+                            R$ <input type="text" id="term_km_excedente" value="2,00"
+                                class="w-10 border-b border-gray-400 bg-transparent text-center font-bold focus:outline-none">
+                            por Km rodado.</p>
+
+                        <p><strong>05. HORA EXTRA:</strong> Cada hora extra de atraso na devolução custará
+                            R$ <input type="text" id="term_hora_extra" value="20,00"
+                                class="w-10 border-b border-gray-400 bg-transparent text-center font-bold focus:outline-none">.
+                        </p>
+
+                        <p><strong>06. REQUISITOS:</strong> Ter mais de 21 anos e CNH há mais de 2 anos.</p>
+
+                        <p><strong>07. CAPACIDADE:</strong> Limite de 5 pessoas. Multas ou apreensões por excesso de
+                            passageiros são de total responsabilidade do locatário.</p>
+
+                        <p><strong>08. SEGURO E FRANQUIA:</strong> Em caso de sinistro (roubo/colisão), o locatário
+                            arcará com a franquia de
+                            R$ <input type="text" id="term_franquia" value="2.500,00"
+                                class="w-20 border-b border-gray-400 bg-transparent text-center font-bold focus:outline-none">.
+                        </p>
+
+                        <p><strong>09. LUCROS CESSANTES:</strong> O locatário paga as diárias do período em que o
+                            veículo ficar parado para conserto em caso de acidente.</p>
+
+                        <p><strong>10. MULTAS:</strong> Infrações (inclusive radar) serão cobradas do locatário, mesmo
+                            após o encerramento deste contrato.</p>
+
+                        <p><strong>11. CAUÇÃO:</strong> Valor de garantia/depósito caução de
+                            R$ <input type="text" id="term_caucao" value="2.500,00"
+                                class="w-20 border-b border-gray-400 bg-transparent text-center font-bold focus:outline-none">
+                            a ser devolvido na entrega.</p>
+
+                        <p><strong>12. DANOS:</strong> A locadora não responde por danos materiais ou pessoais sofridos
+                            pelo locatário durante o uso.</p>
+
+                        <p><strong>13. CINTO DE SEGURANÇA:</strong> Uso obrigatório. Responsabilidade total por multas
+                            deste gênero.</p>
+
+                        <p><strong>14. DOCUMENTAÇÃO:</strong> Necessário deixar cópia da CNH e RG anexados a este termo.
+                        </p>
+
+                        <p><strong>15. DEVOLUÇÃO ANTECIPADA:</strong> Não haverá devolução de diárias em caso de entrega
+                            do veículo antes do prazo contratado.</p>
+                    </div>
+
+                    <hr class="my-4 border-red-200">
+                    <p class="italic text-center font-bold text-red-500 text-[10px]">OS VALORES ACIMA SERÃO IMPRESSOS NO
+                        CONTRATO FINAL.</p>
+                </div>
+
+                <label
+                    class="flex items-center gap-3 p-3 bg-blue-50 rounded border border-blue-200 cursor-pointer mb-6">
+                    <input type="checkbox" id="aceite-termos" class="w-5 h-5 accent-blue-600">
+                    <span class="text-sm font-bold text-blue-800">Li e aceito as condições acima.</span>
+                </label>
+
+                <div class="text-center">
+                    <label class="block text-xs font-black text-gray-500 uppercase mb-2">Assinatura Digital (Use o dedo
+                        ou caneta touch)</label>
+                    <div id="signature-wrapper"
+                        class="relative bg-white border-2 border-gray-400 rounded-lg shadow-md overflow-hidden">
+                        <canvas id="signature-pad" class="w-full h-48 touch-none"></canvas>
+                    </div>
+                    <button id="clear-signature"
+                        class="mt-2 text-xs font-bold text-red-500 uppercase flex items-center justify-center gap-1 mx-auto">
+                        <span>🔄 Limpar e assinar novamente</span>
+                    </button>
+                </div>
+
+                <div class="flex flex-col gap-3 mt-8">
+                    <button onclick="gerarContratoFinal()"
+                        class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-black text-xl shadow-lg transition-all transform active:scale-95 uppercase italic">
+                        ✅ Finalizar e Gerar Contrato
+                    </button>
+                    <button onclick="nextStep(3)" class="w-full text-gray-400 font-bold text-sm uppercase">
+                        ⬅ Voltar para Vistoria
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="./js/script.js"></script>
+</body>
+
+</html>
