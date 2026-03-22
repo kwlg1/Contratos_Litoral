@@ -1,4 +1,4 @@
-document.getElementById('cnh_scanner').addEventListener('change', function(e) {
+document.getElementById('cnh_scanner').addEventListener('change', function (e) {
     const file = e.target.files[0];
     const status = document.getElementById('scanner_status');
     if (!file) return;
@@ -11,31 +11,45 @@ document.getElementById('cnh_scanner').addEventListener('change', function(e) {
         'por', // Idioma Português
         { logger: m => console.log(m) }
     ).then(({ data: { text } }) => {
-        console.log("Texto extraído:", text);
-        
-        // Limpeza básica e tentativa de preencher campos via Regex
-        const linhas = text.split('\n');
-        
-        // Tenta achar o CPF (Padrão 000.000.000-00 ou só números)
+        // 1. Limpeza: Transforma tudo em Maiúsculas e remove espaços extras
+        const linhas = text.split('\n').map(l => l.trim().toUpperCase()).filter(l => l.length > 3);
+
+        // 2. Lista de palavras que DEVEMOS IGNORAR (termos fixos da CNH)
+        const ignorar = ["NOME", "DOC", "IDENTIDADE", "BRASIL", "REPUBLICA", "CARTEIRA", "NACIONAL", "HABILITACAO", "FILIACAO", "ACC", "ORGAO", "EMISSOR", "LOCAL", "DATA"];
+
+        // --- BUSCA PELO CPF ---
         const cpfMatch = text.match(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/);
         if (cpfMatch) document.getElementById('cpf').value = cpfMatch[0];
 
-        // Tenta achar o Número da CNH (Geralmente 11 dígitos isolados)
+        // --- BUSCA PELA CNH (11 DÍGITOS) ---
         const cnhMatch = text.match(/\d{11}/);
         if (cnhMatch) document.getElementById('cnh').value = cnhMatch[0];
 
-        // O nome geralmente é uma das primeiras linhas grandes em caixa alta
-        // Aqui pegamos a linha que tiver mais de 10 caracteres e não for só número
-        const nomeProvavel = linhas.find(l => l.length > 10 && !/\d/.test(l));
-        if (nomeProvavel) document.getElementById('cliente').value = nomeProvavel.trim().toUpperCase();
+        // --- BUSCA PELO NOME (A PARTE DIFÍCIL) ---
+        // Vamos procurar a primeira linha que NÃO tenha números e NÃO esteja na lista de ignorar
+        const nomeReal = linhas.find(linha => {
+            const temNumero = /\d/.test(linha);
+            const ehTermoFixo = ignorar.some(termo => linha.includes(termo));
+            return !temNumero && !ehTermoFixo && linha.length > 8;
+        });
 
-        status.innerText = "LEITURA CONCLUÍDA! CONFIRA OS DADOS.";
+        if (nomeReal) {
+            // Se o nome vier com "NOME:" no início, a gente remove
+            document.getElementById('cliente').value = nomeReal.replace("NOME:", "").trim();
+        }
+
+        // --- BUSCA PELA VALIDADE ---
+        const dataMatch = text.match(/\d{2}\/\d{2}\/\d{4}/g);
+        // Geralmente a maior data na CNH é a de validade
+        if (dataMatch && dataMatch.length > 0) {
+            // Converte DD/MM/AAAA para o formato do input date (AAAA-MM-DD)
+            const partes = dataMatch[dataMatch.length - 1].split('/');
+            document.getElementById('cnh_venc').value = `${partes[2]}-${partes[1]}-${partes[0]}`;
+        }
+
+        status.innerText = "LEITURA CONCLUÍDA! REVISE OS CAMPOS.";
         status.classList.replace("text-blue-600", "text-green-600");
-    }).catch(err => {
-        console.error(err);
-        status.innerText = "ERRO NA LEITURA. TENTE TIRAR UMA FOTO MAIS NÍTIDA.";
-        status.classList.replace("text-blue-600", "text-red-600");
-    });
+    })
 });
 
 
