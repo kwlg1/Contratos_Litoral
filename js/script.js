@@ -1,9 +1,9 @@
 
 // Substitua pela sua chave real do ocr.space
 // Substitua pela chave que você recebeu por e-mail (OCR.space)
-const MINHA_CHAVE_GRATUITA = "K82367523888957"; 
+const MINHA_CHAVE_GRATUITA = "K82367523888957";
 
-document.getElementById('cnh_scanner').addEventListener('change', async function(e) {
+document.getElementById('cnh_scanner').addEventListener('change', async function (e) {
     const file = e.target.files[0];
     const status = document.getElementById('scanner_status');
     if (!file) return;
@@ -28,9 +28,9 @@ document.getElementById('cnh_scanner').addEventListener('change', async function
         if (data.OCRExitCode === 1) {
             const textoLido = data.ParsedResults[0].ParsedText;
             console.log("Texto extraído:", textoLido);
-            
+
             processarDadosLitoral(textoLido);
-            
+
             status.innerText = "✅ CONCLUÍDO! REVISE OS CAMPOS.";
             status.className = "text-green-600 font-bold text-[10px]";
         } else {
@@ -66,7 +66,7 @@ function processarDadosLitoral(texto) {
         // Geralmente a CNH lida tem: Nascimento, Emissão e Validade.
         // A Validade é quase sempre a maior/última data.
         // A Emissão costuma ser a data entre o nascimento e a validade.
-        
+
         // Ordenamos as datas para não ter erro
         const datasOrdenadas = todasDatas.sort((a, b) => {
             return new Date(a.split('/').reverse().join('-')) - new Date(b.split('/').reverse().join('-'));
@@ -81,58 +81,113 @@ function processarDadosLitoral(texto) {
         const emiStr = datasOrdenadas[datasOrdenadas.length - 2];
         const [ed, em, ea] = emiStr.split('/');
         // Verifique se o ID do campo de emissão no seu HTML é 'cnh_emissao'
-        if(document.getElementById('cnh_emissao')) {
+        if (document.getElementById('cnh_emissao')) {
             document.getElementById('cnh_emissao').value = `${ea}-${em}-${ed}`;
         }
     }
 
-// --- 4. BUSCA PELA CATEGORIA (Lógica de Prioridade AB) ---
-const categoriasValidas = ["ACC", "AB", "AC", "AD", "AE", "A", "B", "C", "D", "E"];
-const ufs = ["SP", "RJ", "MG", "ES", "PR", "SC", "RS", "MS", "MT", "GO", "DF", "AM", "BA", "CE", "PA", "PE", "RN", "PB", "AL", "SE", "RO", "AC", "RR", "AP", "TO", "PI", "MA"];
+    // --- 4. BUSCA PELA CATEGORIA (Lógica de Prioridade AB) ---
+    const categoriasValidas = ["ACC", "AB", "AC", "AD", "AE", "A", "B", "C", "D", "E"];
+    const ufs = ["SP", "RJ", "MG", "ES", "PR", "SC", "RS", "MS", "MT", "GO", "DF", "AM", "BA", "CE", "PA", "PE", "RN", "PB", "AL", "SE", "RO", "AC", "RR", "AP", "TO", "PI", "MA"];
 
-let catFinal = "";
+    let catFinal = "";
 
-// 1. Procuramos todas as ocorrências de 1 ou 2 letras A-E
-const todasOcorrencias = raw.match(/\b[A-E]{1,2}\b/g) || [];
+    // 1. Procuramos todas as ocorrências de 1 ou 2 letras A-E
+    const todasOcorrencias = raw.match(/\b[A-E]{1,2}\b/g) || [];
 
-// 2. Filtramos apenas o que é categoria real e não é Estado (UF)
-const candidatos = todasOcorrencias.filter(c => 
-    categoriasValidas.includes(c) && !ufs.includes(c)
-);
+    // 2. Filtramos apenas o que é categoria real e não é Estado (UF)
+    const candidatos = todasOcorrencias.filter(c =>
+        categoriasValidas.includes(c) && !ufs.includes(c)
+    );
 
-if (candidatos.length > 0) {
-    // REGRA DE OURO: Se houver qualquer "AB", "AC" etc. na lista, 
-    // nós damos prioridade para a maior string (ex: AB ganha de A)
-    const maiorCat = candidatos.sort((a, b) => b.length - a.length)[0];
-    
-    // Na CNH, a categoria oficial geralmente aparece por último no texto lido
-    const ultimaCat = candidatos[candidatos.length - 1];
+    if (candidatos.length > 0) {
+        // REGRA DE OURO: Se houver qualquer "AB", "AC" etc. na lista, 
+        // nós damos prioridade para a maior string (ex: AB ganha de A)
+        const maiorCat = candidatos.sort((a, b) => b.length - a.length)[0];
 
-    // Se a última encontrada for apenas 1 letra (A), mas existir um AB perdido antes, 
-    // ficamos com o AB porque é mais específico.
-    catFinal = maiorCat.length > ultimaCat.length ? maiorCat : ultimaCat;
-}
+        // Na CNH, a categoria oficial geralmente aparece por último no texto lido
+        const ultimaCat = candidatos[candidatos.length - 1];
 
-// 3. Validação Extra: Se ainda estiver vazio, busca perto da palavra "CAT"
-if (!catFinal) {
-    const regexCat = /(?:CAT|CATEGORIA)\s*([A-E]{1,2})/i;
-    const matchManual = raw.match(regexCat);
-    if (matchManual) catFinal = matchManual[1];
-}
+        // Se a última encontrada for apenas 1 letra (A), mas existir um AB perdido antes, 
+        // ficamos com o AB porque é mais específico.
+        catFinal = maiorCat.length > ultimaCat.length ? maiorCat : ultimaCat;
+    }
 
-if (catFinal && document.getElementById('cnh_cat')) {
-    document.getElementById('cnh_cat').value = catFinal;
-}
+    // 3. Validação Extra: Se ainda estiver vazio, busca perto da palavra "CAT"
+    if (!catFinal) {
+        const regexCat = /(?:CAT|CATEGORIA)\s*([A-E]{1,2})/i;
+        const matchManual = raw.match(regexCat);
+        if (matchManual) catFinal = matchManual[1];
+    }
+
+    if (catFinal && document.getElementById('cnh_cat')) {
+        document.getElementById('cnh_cat').value = catFinal;
+    }
 
     // --- 5. NOME DO CLIENTE ---
     const termosDoc = ["BRASIL", "REPUBLICA", "NACIONAL", "MINISTERIO", "TRANSITO", "HABILITACAO", "IDENTIDADE", "NOME", "DOC", "VALIDADE", "DATA", "EMISSÃO"];
-    const linhaNome = linhas.find(l => 
-        l.length > 12 && 
-        !/\d/.test(l) && 
+    const linhaNome = linhas.find(l =>
+        l.length > 12 &&
+        !/\d/.test(l) &&
         !termosDoc.some(t => l.includes(t))
     );
     if (linhaNome) document.getElementById('cliente').value = linhaNome;
 }
+
+document.getElementById('cep_res').addEventListener('blur', function () {
+    let cep = this.value.replace(/\D/g, ''); // Remove traços e pontos
+
+    if (cep.length === 8) {
+        statusEndereco("⏳ Buscando endereço...");
+
+        fetch(`https://viacep.com.br/ws/${cep}/json/`)
+            .then(response => response.json())
+            .then(dados => {
+                if (!dados.erro) {
+                    // Preenche os campos
+                    document.getElementById('end_res').value = dados.logradouro;
+                    document.getElementById('bairro_res').value = dados.bairro;
+                    document.getElementById('cid_res').value = dados.localidade;
+                    document.getElementById('est_res').value = dados.uf;
+
+                    // Coloca o cursor no campo "Número" para o atendente completar
+                    document.getElementById('identidade').focus();
+
+                    statusEndereco("✅ CEP Encontrado!", "green");
+                } else {
+                    statusEndereco("❌ CEP não encontrado.", "red");
+                    limparCamposEndereco();
+                }
+            })
+            .catch(error => {
+                statusEndereco("❌ Erro ao conectar com servidor de CEP.", "red");
+                console.error(error);
+            });
+    }
+});
+
+// Funções Auxiliares
+function statusEndereco(texto, cor = "blue") {
+    // Você pode usar o mesmo scanner_status ou criar um novo para o CEP
+    const status = document.getElementById('scanner_status');
+    if (status) {
+        status.innerText = texto;
+        status.style.color = cor;
+    }
+}
+
+function limparCamposEndereco() {
+    document.getElementById('endereco').value = "";
+    document.getElementById('bairro').value = "";
+    document.getElementById('cidade').value = "";
+    document.getElementById('uf').value = "";
+}
+
+// Máscara automática para o CEP enquanto digita
+document.getElementById('cep_res').addEventListener('input', function (e) {
+    let x = e.target.value.replace(/\D/g, '').match(/(\d{0,5})(\d{0,3})/);
+    e.target.value = !x[2] ? x[1] : x[1] + '-' + x[2];
+});
 
 // A lógica de clique permanece a mesma, mas agora o mapa é mais completo
 const carSvg = document.getElementById('car-svg');
@@ -433,3 +488,47 @@ async function gerarContratoFinal() {
     } catch (e) { console.error(e); alert("Erro ao gerar PDF."); }
     finally { btn.innerText = "✅ FINALIZAR E GERAR CONTRATO"; btn.disabled = false; }
 }
+
+// --- LÓGICA DE CÁLCULO DE ALUGUEL ---
+// --- LÓGICA DE CÁLCULO BLINDADA LITORAL ---
+
+document.addEventListener("DOMContentLoaded", function() {
+    const campoDiaria = document.getElementById('valor_diaria');
+    const campoDias = document.getElementById('n_diaria');
+    const campoTotal = document.getElementById('total_pagar');
+
+    if (campoDiaria) {
+        campoDiaria.addEventListener('input', function(e) {
+            // Garante que estamos tratando o valor como texto (string)
+            let v = String(e.target.value).replace(/\D/g, '');
+            
+            if (v === "" || v === "0") {
+                e.target.value = "";
+            } else {
+                // Formata o número (ex: 1500 -> 15,00)
+                let numero = (Number(v) / 100).toFixed(2).replace('.', ',');
+                // Adiciona o R$ e o ponto de milhar
+                numero = numero.replace(/(\d)(\d{3}),/g, "$1.$2,");
+                e.target.value = "R$ " + numero;
+            }
+            calcularTotalAluguel();
+        });
+    }
+
+    function calcularTotalAluguel() {
+        if (!campoDiaria || !campoDias || !campoTotal) return;
+
+        // Pega o valor, se for nulo vira string vazia
+        let valorRaw = String(campoDiaria.value || "");
+        
+        // Limpeza profunda para o cálculo
+        let diariaLimpa = valorRaw.replace("R$ ", "").replace(/\./g, "").replace(",", ".");
+        let diaria = parseFloat(diariaLimpa) || 0;
+        let dias = parseInt(campoDias.value) || 0;
+        
+        const total = diaria * dias;
+
+        // Exibe o total formatado
+        campoTotal.value = "R$ " + total.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    }
+});
