@@ -480,7 +480,7 @@ async function gerarContratoFinal() {
         doc.save(`Contrato_Litoral_${getVal('placa')}.pdf`);
 
         setTimeout(() => {
-            if (confirm("PDF de 2 páginas gerado! Deseja abrir o Assinafy?")) enviarContratoAutomatico();
+            if (confirm("PDF de 2 páginas gerado! Deseja abrir o Assinafy?")) window.open("https://app.assinafy.com.br/", "_blank");
             const fone = getVal('tel_res').replace(/\D/g, '');
             window.open(`https://api.whatsapp.com/send?phone=55${fone}&text=Segue seu contrato completo da Litoral Rent a Car.`, '_blank');
         }, 1200);
@@ -492,16 +492,16 @@ async function gerarContratoFinal() {
 // --- LÓGICA DE CÁLCULO DE ALUGUEL ---
 // --- LÓGICA DE CÁLCULO BLINDADA LITORAL ---
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function() {
     const campoDiaria = document.getElementById('valor_diaria');
     const campoDias = document.getElementById('n_diaria');
     const campoTotal = document.getElementById('total_pagar');
 
     if (campoDiaria) {
-        campoDiaria.addEventListener('input', function (e) {
+        campoDiaria.addEventListener('input', function(e) {
             // Garante que estamos tratando o valor como texto (string)
             let v = String(e.target.value).replace(/\D/g, '');
-
+            
             if (v === "" || v === "0") {
                 e.target.value = "";
             } else {
@@ -520,59 +520,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Pega o valor, se for nulo vira string vazia
         let valorRaw = String(campoDiaria.value || "");
-
+        
         // Limpeza profunda para o cálculo
         let diariaLimpa = valorRaw.replace("R$ ", "").replace(/\./g, "").replace(",", ".");
         let diaria = parseFloat(diariaLimpa) || 0;
         let dias = parseInt(campoDias.value) || 0;
-
+        
         const total = diaria * dias;
 
         // Exibe o total formatado
         campoTotal.value = "R$ " + total.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
     }
 });
-
-async function enviarContratoAutomatico() {
-    const TEMPLATE_ID = "1022def207a2917b96df0101bf95";
-    
-    // O Netlify expõe as funções neste caminho padrão:
-    const apiUrl = "/.netlify/functions/enviar"; 
-
-    const dadosContrato = {
-        template_id: TEMPLATE_ID,
-        title: `Contrato Litoral Rent a Car - ${document.getElementById('cliente').value}`,
-        signers: [{
-            name: document.getElementById('cliente').value,
-            email: document.getElementById('email').value,
-            role: "Signer",
-            signature_positions: [{
-                anchor_string: "[[assinatura_cliente]]",
-                anchor_units: "cms",
-                anchor_x_offset: 0,
-                anchor_y_offset: 0
-            }]
-        }]
-    };
-
-    try {
-        const response = await fetch(apiUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(dadosContrato)
-        });
-
-        const resultado = await response.json();
-
-        if (response.ok) {
-            alert("🚀 Sucesso! Contrato enviado via Netlify Functions.");
-            console.log("ID do documento:", resultado.id);
-        } else {
-            console.error("Erro Assinafy:", resultado);
-            alert("❌ Erro ao enviar: " + (resultado.message || "Verifique o console"));
-        }
-    } catch (error) {
-        console.error("Erro no fetch:", error);
-        alert("❌ Erro de conexão com a função do Netlify.");
-    }
-}
