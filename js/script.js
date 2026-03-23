@@ -480,7 +480,7 @@ async function gerarContratoFinal() {
         doc.save(`Contrato_Litoral_${getVal('placa')}.pdf`);
 
         setTimeout(() => {
-            if (confirm("PDF de 2 páginas gerado! Deseja abrir o Assinafy?")) window.open("https://app.assinafy.com.br/", "_blank");
+            if (confirm("PDF de 2 páginas gerado! Deseja abrir o Assinafy?")) enviarContratoAutomatico();
             const fone = getVal('tel_res').replace(/\D/g, '');
             window.open(`https://api.whatsapp.com/send?phone=55${fone}&text=Segue seu contrato completo da Litoral Rent a Car.`, '_blank');
         }, 1200);
@@ -532,3 +532,50 @@ document.addEventListener("DOMContentLoaded", function() {
         campoTotal.value = "R$ " + total.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
     }
 });
+
+
+async function enviarContratoAutomatico() {
+    const API_TOKEN = "YQdykbfU-J-IlBrlChFQbnB85ZdrkjRlO9FCAxcjjufibRZaDdAFwWxt_HVpPPiG";
+    const TEMPLATE_ID = "1022def207a2917b96df0101bf95";
+
+    const dadosEnvio = {
+        template_id: TEMPLATE_ID,
+        title: `Locação - ${document.getElementById('cliente').value}`,
+        signers: [
+            {
+                name: document.getElementById('cliente').value,
+                email: document.getElementById('email').value,
+                role: "Signer",
+                // Aqui dizemos para a Assinafy onde posicionar a assinatura automaticamente
+                signature_positions: [
+                    {
+                        anchor_string: "[[assinatura_cliente]]", // O código que você escreveu no PDF
+                        anchor_units: "cms",
+                        anchor_x_offset: 0,
+                        anchor_y_offset: 0
+                    }
+                ]
+            }
+        ],
+        // Preenche os dados automáticos do OCR no contrato
+    };
+
+    try {
+        const response = await fetch("https://api.assinafy.com.br/v1/documents", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${API_TOKEN}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(dadosEnvio)
+        });
+
+        if (response.ok) {
+            alert("🚀 Contrato enviado! O cliente já pode assinar no e-mail.");
+        }
+    } catch (error) {
+        console.error("Erro ao integrar com Assinafy", error);
+    }
+}
+
+
