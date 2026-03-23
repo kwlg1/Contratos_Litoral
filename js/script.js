@@ -492,16 +492,16 @@ async function gerarContratoFinal() {
 // --- LÓGICA DE CÁLCULO DE ALUGUEL ---
 // --- LÓGICA DE CÁLCULO BLINDADA LITORAL ---
 
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     const campoDiaria = document.getElementById('valor_diaria');
     const campoDias = document.getElementById('n_diaria');
     const campoTotal = document.getElementById('total_pagar');
 
     if (campoDiaria) {
-        campoDiaria.addEventListener('input', function(e) {
+        campoDiaria.addEventListener('input', function (e) {
             // Garante que estamos tratando o valor como texto (string)
             let v = String(e.target.value).replace(/\D/g, '');
-            
+
             if (v === "" || v === "0") {
                 e.target.value = "";
             } else {
@@ -520,12 +520,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Pega o valor, se for nulo vira string vazia
         let valorRaw = String(campoDiaria.value || "");
-        
+
         // Limpeza profunda para o cálculo
         let diariaLimpa = valorRaw.replace("R$ ", "").replace(/\./g, "").replace(",", ".");
         let diaria = parseFloat(diariaLimpa) || 0;
         let dias = parseInt(campoDias.value) || 0;
-        
+
         const total = diaria * dias;
 
         // Exibe o total formatado
@@ -533,48 +533,65 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-
 async function enviarContratoAutomatico() {
     const API_TOKEN = "YQdykbfU-J-IlBrlChFQbnB85ZdrkjRlO9FCAxcjjufibRZaDdAFwWxt_HVpPPiG";
     const TEMPLATE_ID = "1022def207a2917b96df0101bf95";
 
-    const dadosEnvio = {
+    const apiUrl = "https://api.assinafy.com.br/api/v1/documents"; 
+
+    // Coleta os dados do formulário
+    const nomeCliente = document.getElementById('cliente').value;
+    const emailCliente = document.getElementById('email').value;
+
+    if (!emailCliente) {
+        alert("⚠️ Por favor, preencha o e-mail do cliente!");
+        return;
+    }
+
+    const dadosContrato = {
         template_id: TEMPLATE_ID,
-        title: `Locação - ${document.getElementById('cliente').value}`,
+        title: `Contrato de Locação - Litoral Rent a Car`,
         signers: [
             {
-                name: document.getElementById('cliente').value,
-                email: document.getElementById('email').value,
+                name: nomeCliente,
+                email: emailCliente,
                 role: "Signer",
-                // Aqui dizemos para a Assinafy onde posicionar a assinatura automaticamente
                 signature_positions: [
                     {
-                        anchor_string: "[[assinatura_cliente]]", // O código que você escreveu no PDF
+                        anchor_string: "[[assinatura_cliente]]",
                         anchor_units: "cms",
                         anchor_x_offset: 0,
                         anchor_y_offset: 0
                     }
                 ]
             }
-        ],
-        // Preenche os dados automáticos do OCR no contrato
+        ]
     };
 
     try {
-        const response = await fetch("https://api.assinafy.com.br/v1/documents", {
+        console.log("Enviando contrato direto para Assinafy...");
+
+        const response = await fetch(apiUrl, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${API_TOKEN}`,
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(dadosEnvio)
+            body: JSON.stringify(dadosContrato)
         });
 
         if (response.ok) {
-            alert("🚀 Contrato enviado! O cliente já pode assinar no e-mail.");
+            const resultado = await response.json();
+            alert("🚀 Sucesso! O contrato foi enviado para " + emailCliente);
+            console.log("Retorno Assinafy:", resultado);
+        } else {
+            const erroTxt = await response.text();
+            console.error("Erro na API Assinafy:", erroTxt);
+            alert("❌ Erro ao enviar. Verifique se o Token e o Template ID estão corretos.");
         }
     } catch (error) {
-        console.error("Erro ao integrar com Assinafy", error);
+        console.error("Erro de conexão:", error);
+        alert("❌ O navegador bloqueou a conexão (CORS). Ative a extensão Allow CORS ou configure seu servidor.");
     }
 }
 
