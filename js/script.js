@@ -534,65 +534,45 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 async function enviarContratoAutomatico() {
-    const API_TOKEN = "YQdykbfU-J-IlBrlChFQbnB85ZdrkjRlO9FCAxcjjufibRZaDdAFwWxt_HVpPPiG";
     const TEMPLATE_ID = "1022def207a2917b96df0101bf95";
-
-    const apiUrl = "https://api.assinafy.com.br/api/v1/documents"; 
-
-    // Coleta os dados do formulário
-    const nomeCliente = document.getElementById('cliente').value;
-    const emailCliente = document.getElementById('email').value;
-
-    if (!emailCliente) {
-        alert("⚠️ Por favor, preencha o e-mail do cliente!");
-        return;
-    }
+    
+    // O Netlify expõe as funções neste caminho padrão:
+    const apiUrl = "/.netlify/functions/enviar"; 
 
     const dadosContrato = {
         template_id: TEMPLATE_ID,
-        title: `Contrato de Locação - Litoral Rent a Car`,
-        signers: [
-            {
-                name: nomeCliente,
-                email: emailCliente,
-                role: "Signer",
-                signature_positions: [
-                    {
-                        anchor_string: "[[assinatura_cliente]]",
-                        anchor_units: "cms",
-                        anchor_x_offset: 0,
-                        anchor_y_offset: 0
-                    }
-                ]
-            }
-        ]
+        title: `Contrato Litoral Rent a Car - ${document.getElementById('cliente').value}`,
+        signers: [{
+            name: document.getElementById('cliente').value,
+            email: document.getElementById('email_cliente').value,
+            role: "Signer",
+            signature_positions: [{
+                anchor_string: "[[assinatura_cliente]]",
+                anchor_units: "cms",
+                anchor_x_offset: 0,
+                anchor_y_offset: 0
+            }]
+        }]
     };
 
     try {
-        console.log("Enviando contrato direto para Assinafy...");
-
         const response = await fetch(apiUrl, {
             method: "POST",
-            headers: {
-                "Authorization": `Bearer ${API_TOKEN}`,
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(dadosContrato)
         });
 
+        const resultado = await response.json();
+
         if (response.ok) {
-            const resultado = await response.json();
-            alert("🚀 Sucesso! O contrato foi enviado para " + emailCliente);
-            console.log("Retorno Assinafy:", resultado);
+            alert("🚀 Sucesso! Contrato enviado via Netlify Functions.");
+            console.log("ID do documento:", resultado.id);
         } else {
-            const erroTxt = await response.text();
-            console.error("Erro na API Assinafy:", erroTxt);
-            alert("❌ Erro ao enviar. Verifique se o Token e o Template ID estão corretos.");
+            console.error("Erro Assinafy:", resultado);
+            alert("❌ Erro ao enviar: " + (resultado.message || "Verifique o console"));
         }
     } catch (error) {
-        console.error("Erro de conexão:", error);
-        alert("❌ O navegador bloqueou a conexão (CORS). Ative a extensão Allow CORS ou configure seu servidor.");
+        console.error("Erro no fetch:", error);
+        alert("❌ Erro de conexão com a função do Netlify.");
     }
 }
-
-
