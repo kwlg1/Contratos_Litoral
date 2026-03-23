@@ -544,7 +544,7 @@ async function enviarContratoAutomatico() {
         title: `Contrato Litoral Rent a Car - ${document.getElementById('cliente').value}`,
         signers: [{
             name: document.getElementById('cliente').value,
-            email: document.getElementById('email_cliente').value,
+            email: document.getElementById('email').value,
             role: "Signer",
             signature_positions: [{
                 anchor_string: "[[assinatura_cliente]]",
