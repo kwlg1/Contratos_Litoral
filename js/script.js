@@ -379,8 +379,15 @@ async function gerarContratoFinal() {
         doc.text(`CHEGADA: ${formatarDataBR('chegada_dt')} | KM: ${getVal('chegada_km')}`, 105, y);
         y += 6;
         doc.text(`HOTEL: ${getVal('hotel')} | TEL: ${getVal('hotel_tel')}`, 10, y);
-        doc.text(`APTO: ${getVal('hotel_apto')} | DIÁRIAS: ${getVal('hotel_diarias')}`, 130, y);
+        // CORREÇÃO DOS IDs AQUI: de 'hotel_diarias' para 'n_diaria'
+        doc.text(`APTO: ${getVal('hotel_apto')} | DIÁRIAS: ${getVal('n_diaria')}`, 130, y);
 
+        // ADICIONE ESTA LINHA PARA MOSTRAR O VALOR FINANCEIRO NO PDF
+        y += 6;
+        doc.setFont("helvetica", "bold");
+        doc.text(`VALOR DIÁRIA: ${getVal('valor_diaria')} | TOTAL A PAGAR: ${getVal('total_pagar')}`, 10, y);
+        doc.setFont("helvetica", "normal");
+        
         // 3. VISTORIA E ACESSÓRIOS
         y += 12;
         doc.setFont("helvetica", "bold");
@@ -491,16 +498,16 @@ async function gerarContratoFinal() {
 // --- LÓGICA DE CÁLCULO DE ALUGUEL ---
 // --- LÓGICA DE CÁLCULO BLINDADA LITORAL ---
 
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     const campoDiaria = document.getElementById('valor_diaria');
     const campoDias = document.getElementById('n_diaria');
     const campoTotal = document.getElementById('total_pagar');
 
     if (campoDiaria) {
-        campoDiaria.addEventListener('input', function(e) {
+        campoDiaria.addEventListener('input', function (e) {
             // Garante que estamos tratando o valor como texto (string)
             let v = String(e.target.value).replace(/\D/g, '');
-            
+
             if (v === "" || v === "0") {
                 e.target.value = "";
             } else {
@@ -519,12 +526,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Pega o valor, se for nulo vira string vazia
         let valorRaw = String(campoDiaria.value || "");
-        
+
         // Limpeza profunda para o cálculo
         let diariaLimpa = valorRaw.replace("R$ ", "").replace(/\./g, "").replace(",", ".");
         let diaria = parseFloat(diariaLimpa) || 0;
         let dias = parseInt(campoDias.value) || 0;
-        
+
         const total = diaria * dias;
 
         // Exibe o total formatado
