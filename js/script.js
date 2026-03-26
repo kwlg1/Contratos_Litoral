@@ -442,11 +442,10 @@ async function gerarContratoFinal() {
             `08. SEGURO: Em caso de sinistro, o locatário responde pela franquia de R$ ${getVal('term_franquia')} + B.O. oficial.`,
             "09. O locatário responde pelas diárias em que o veículo permanecer parado para conserto em oficina.",
             "10. Multas de trânsito no período são de responsabilidade do locatário, inclusive cobrança via banco/protesto.",
-            `11. CAUÇÃO: O locatário deixa como garantia o valor de R$ ${getVal('term_caucao')}, devolvido na inspeção final.`,
-            "12. A locadora não se responsabiliza por danos materiais ou pessoais sofridos pelo locatário durante o uso.",
-            "13. O uso do cinto de segurança é obrigatório por lei. Multas por descumprimento são do locatário.",
-            "14. É obrigatória a apresentação e entrega de cópias da C.N.H. e Identidade do condutor.",
-            "15. Em caso de devolução antecipada do veículo, não haverá restituição de valores das diárias restantes."
+            "11. A locadora não se responsabiliza por danos materiais ou pessoais sofridos pelo locatário durante o uso.",
+            "12. O uso do cinto de segurança é obrigatório por lei. Multas por descumprimento são do locatário.",
+            "13. É obrigatória a apresentação e entrega de cópias da C.N.H. e Identidade do condutor.",
+            "14. Em caso de devolução antecipada do veículo, não haverá restituição de valores das diárias restantes."
         ];
 
         termos.forEach(t => {
